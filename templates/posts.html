@@ -1,0 +1,29 @@
+{% extends "layout.html" %} {% block button %}
+<a href="/profile" class="btn btn-light mx-2"
+  ><i class="fa fa-user-circle" aria-hidden="true"></i> Profile</a
+>
+<a href="/logout" class="btn btn-outline-dark mx-2">Log out</a>
+{% endblock %} {% block content %}
+<h2 class="text-center header">All posts</h2>
+<ul>
+  {% for post in posts %}
+  <li class="post">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="post-title">{{ post.title }}</h5>
+        <p>{{ post.body }}</p>
+        <small> {{ post.author.user_name }} </small>
+        <small class="font-italic"> at {{ post.updated_on }}</small>
+        <br />
+        <a class="card-link edit mt-5" href="{{ '/edit/%s' % post.id }}"
+          >Edit</a
+        >
+        <a class="card-link del mt-5" href="{{ '/delete/%s' % post.id }}"
+          >Delete</a
+        >
+      </div>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

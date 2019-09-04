@@ -1,28 +1,24 @@
 html,
 body {
   height: 100%;
+  padding: 0;
 }
 
-body {
-  display: -ms-flexbox;
-  display: flex;
-  flex-direction: column;
-  -ms-flex-align: center;
-  align-items: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
-  background-color: #f5f5f5;
+* {
+  font-family: "Livvic", sans-serif;
 }
 
 .form-signin {
   width: 100%;
   max-width: 500px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
   padding: 15px;
   margin: auto;
 }
-.form-signin .checkbox {
-  font-weight: 400;
-}
+
 .form-signin .form-control {
   position: relative;
   box-sizing: border-box;
@@ -34,7 +30,6 @@ body {
   z-index: 2;
 }
 .form-signin input[type="email"] {
-  margin-bottom: -1px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
 }
@@ -44,17 +39,48 @@ body {
   border-top-right-radius: 0;
 }
 
-.bd-placeholder-img {
-  font-size: 1.125rem;
-  text-anchor: middle;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+.navbar {
+  width: 100%;
+}
+.navbar-brand {
+  color: #5a6d79;
+  font-family: "Chilanka", cursive;
 }
 
-@media (min-width: 768px) {
-  .bd-placeholder-img-lg {
-    font-size: 3.5rem;
-  }
+.navbar .form-inline {
+  margin-left: auto;
+}
+li {
+  list-style-type: none;
+}
+
+li.post,
+.flashes li {
+  margin: 1rem;
+}
+
+.header {
+  color: #5a6d79;
+  font-family: "Chilanka", cursive;
+  margin: 2rem;
+  text-align: center;
+}
+
+.post-title {
+  color: #a4a8d1;
+}
+
+#submit {
+  background-color: #cdcfe5;
+}
+
+.card a.edit {
+  color: #8cabbe !important;
+}
+.card a.edit:hover {
+  color: #333f46 !important;
+}
+
+a.del {
+  color: #333f46 !important;
 }
