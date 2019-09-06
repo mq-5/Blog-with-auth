@@ -28,9 +28,9 @@
 
 Voting feature
 
-- [ ] The user should also upvote (or downvote) on each post and comment. User should not be able to upvote or downvote more than 1 point, attempting to vote (up or down) more than once will result the vote that specific user voted goes back to 0
+- [x] The user should also upvote (or downvote) on each post and comment. User should not be able to upvote or downvote more than 1 point, attempting to vote (up or down) more than once will result the vote that specific user voted goes back to 0
       (Take a look at Stack overflow as an example. You can change the voting system to your liking, e.g when user already vote up/down, they cannot vote up/down again unless they vote down/up )
-- [ ] The user can also see the number of comments, votes for each post on the home page.
+- [x] The user can also see the number of comments, votes for each post on the home page.
 
 Follow feature
 
@@ -43,3 +43,4 @@ Follow feature
 
 - [] Error view
 - [] Edit profile info
+- [] Forget password

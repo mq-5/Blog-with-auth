@@ -3,16 +3,16 @@
 <div class="card container">
   <div class="card-body">
     <a href="{{ url_for('profile', id=post.author.id) }}"
-      ><h3>{{ post.author.user_name or "Anonymous"}}</h3></a
+      ><h3 class="d-inline">
+        {{ post.author.user_name or "Anonymous"}}
+      </h3></a
     >
-    <p>
+    <p class="font-italic mx-2 d-inline">
+      {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}
+    </p>
+    <p class="mt-3 ">
       {{ post.body | safe }}
     </p>
-    <small class="font-italic">
-      {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small
-    >
-
-    <br />
     {% if current_user.id == post.author_id %}
     <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}"
       >Edit</a
@@ -31,7 +31,7 @@
         <small class="font-italic">
           on {{ "{:%Y-%m-%d %H:%M}".format(comment.created_on) }}
         </small>
-        {% if current_user.id == post.author_id %}
+        {% if current_user.id == comment.author_id %}
         <a href="{{ url_for('edit_comment', id= comment.id) }}">
           <i
             class="fa fa-pencil-square mx-2"

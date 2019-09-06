@@ -8,11 +8,12 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, ValidationError, TextField, TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, InputRequired
 from wtforms.widgets import TextArea
+
+
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['SECRET_KEY'] = "secret"
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-
 
 POSTGRES = {
     'user': 'quyen',
@@ -38,6 +39,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
+    upvotes = db.relationship("UpVote", backref="user", lazy="dynamic")
+    downvotes = db.relationship("DownVote", backref="user", lazy="dynamic")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -55,12 +58,26 @@ class Post(db.Model):
     updated_on = db.Column(
         db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
     comments = db.relationship("Comment", backref="post", lazy="dynamic")
+    upvotes = db.relationship("UpVote", backref="post", lazy="dynamic")
+    downvotes = db.relationship("DownVote", backref="post", lazy="dynamic")
 
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(255), nullable=False)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+
+class UpVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+
+class DownVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
 
@@ -204,7 +221,7 @@ def upload():
     return render_template("new_post.html", form=form)
 
 
-@app.route('/post/<id>', methods=['POST', "GET"])
+@app.route('/posts/<id>', methods=['POST', "GET"])
 def post(id):
     post = Post.query.filter_by(id=id).first()
     form = NewComment()
@@ -225,24 +242,58 @@ def post(id):
     return render_template('single_post.html', post=post, comment_form=form, comments=post.comments.all())
 
 
+@app.route('/posts/<id>/like', methods=['POST', 'GET'])
+def like(id):
+    ref = request.args.get('ref')
+    print(ref)
+    existing_upvotes = UpVote.query.filter_by(
+        post_id=id, author_id=current_user.id).first()
+    existing_downvotes = DownVote.query.filter_by(
+        post_id=id, author_id=current_user.id).first()
+    if not existing_upvotes:
+        upvote = UpVote(post_id=id)
+        current_user.upvotes.append(upvote)
+        db.session.add(upvote)
+        if existing_downvotes:
+            db.session.delete(existing_downvotes)
+        db.session.commit()
+    return redirect(url_for('posts'))
+
+
+@app.route('/posts/<id>/dislike', methods=['POST', 'GET'])
+def dislike(id):
+    existing_upvotes = UpVote.query.filter_by(
+        post_id=id, author_id=current_user.id).first()
+    existing_downvotes = DownVote.query.filter_by(
+        post_id=id, author_id=current_user.id).first()
+    if not existing_downvotes:
+        downvote = DownVote(post_id=id)
+        current_user.downvotes.append(downvote)
+        db.session.add(downvote)
+        if existing_upvotes:
+            db.session.delete(existing_upvotes)
+        db.session.commit()
+    return redirect(url_for('posts'))
+
+
 @app.route("/edit/<id>", methods=["POST", "GET"])
 @login_required
 def edit(id):
-    form = NewPost()  # Reuse form for post creation
+    form = NewPost()
     post = Post.query.filter_by(id=id, author_id=current_user.id).first()
-    if request.method == "POST":
-        if form.validate_on_submit() and post:
+    if post:
+        if request.method == "POST" and form.validate_on_submit():
             post.title = form.title.data
             post.body = form.body.data
             post.updated_on = datetime.now().now()
             db.session.commit()
             flash("Post successfully edited!", 'success')
-        else:
-            flash("You are not authorized to edit this post", "danger")
-            for field_name, errors in form.errors.items():
-                flash(errors[0])
-        return redirect(url_for("posts"))
-    return render_template("edit_form.html", form=form, post=post)
+        for field_name, errors in form.errors.items():
+            flash(errors[0])
+        return render_template("edit_form.html", form=form, post=post)
+    else:
+        flash("You are not authorized to edit this post", "danger")
+    return redirect(url_for("posts"))
 
 
 @app.route("/edit-comment/<id>", methods=['POST', "GET"])
@@ -279,8 +330,8 @@ def delete(id):
 @app.route("/delete-comment/<id>")
 @login_required
 def delete_comment(id):
-    comment = Comment.query.filter_by(id=id, author_id=current_user.id).first()
-    if comment:
+    comment = Comment.query.filter_by(id=id).first()
+    if current_user.id == comment.author_id:
         db.session.delete(comment)
         db.session.commit()
         flash("Comment deleted!")

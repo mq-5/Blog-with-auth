@@ -19,8 +19,29 @@
         <small class="font-italic">
           {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small
         >
-        <i class="fa fa-comment purple ml-3" aria-hidden="true"> </i>
-        <span style="font-size: small">{{ post.comments.count() }}</span>
+        <hr />
+        <div>
+          <a
+            href="{{ url_for('like', id=post.id, ref='home') }}"
+            class=" like card-link "
+          >
+            <i
+              class="fa fa-thumbs-up purple"
+              aria-hidden="true"
+              style="font-size: large"
+            ></i>
+            {{ post.upvotes.count() }}</a
+          >
+          <a
+            href="{{ url_for('dislike', id=post.id) }}"
+            class=" like card-link"
+          >
+            <i class="fa fa-thumbs-down purple" style="font-size: large"></i>
+            {{ post.downvotes.count() }}</a
+          >
+          <i class="fa fa-comment-o purple ml-3" aria-hidden="true"> </i>
+          <span>{{ post.comments.count() }}</span>
+        </div>
       </div>
     </div>
   </li>
