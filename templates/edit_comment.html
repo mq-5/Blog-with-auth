@@ -1,0 +1,9 @@
+{% extends "layout.html" %} {% block content %}
+<h2 class="header">Edit comment</h2>
+
+<form class="input-group my-3" method="POST">
+  {{ form.hidden_tag() }}
+  {{ form.body(class_="form-control", placeholder=comment.body) }}
+  {{ form.submit(class_="btn") }}
+</form>
+{% endblock %}

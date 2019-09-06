@@ -1,14 +1,12 @@
-{% extends "layout.html" %} {% block button %}
-<a href="/profile" class="btn btn-light mx-2"
-  ><i class="fa fa-user-circle" aria-hidden="true"></i> Profile</a
->
-<a href="/logout" class="btn btn-outline-dark mx-2">Log out</a>
-{% endblock %} {% block content %}
+{% extends "layout.html" %} {% block content %}
 <div class="text-center mb-5">
-  <h1 class="header">Welcome! {{ user.user_name }}</h1>
+  <h1 class="header">This is {{ user.user_name }}</h1>
+  <a href="#">Edit information</a>
   <h5>Email: {{ user.email }}</h5>
   <h5>User ID: {{ user.id }}</h5>
   <h5>User name: {{ user.user_name }}</h5>
-  <h5>Posts: {{ count }}</h5>
+  <h5>
+    Posts: <a href=" {{ url_for('user_posts', id=user.id) }}">{{ count }}</a>
+  </h5>
 </div>
 {% endblock %}

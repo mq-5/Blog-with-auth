@@ -1,26 +1,26 @@
-{% extends "layout.html" %} {% block button %}
-<a href="/profile" class="btn btn-light mx-2"
-  ><i class="fa fa-user-circle" aria-hidden="true"></i> Profile</a
->
-<a href="/logout" class="btn btn-outline-dark mx-2">Log out</a>
-{% endblock %} {% block content %}
+{% extends "layout.html" %} {% block content %}
 <h2 class="text-center header">All posts</h2>
 <ul>
   {% for post in posts %}
   <li class="post">
     <div class="card">
-      <div class="card-body">
-        <h5 class="post-title">{{ post.title }}</h5>
-        <p>{{ post.body }}</p>
-        <small> {{ post.author.user_name }} </small>
-        <small class="font-italic"> at {{ post.updated_on }}</small>
-        <br />
-        <a class="card-link edit mt-5" href="{{ '/edit/%s' % post.id }}"
-          >Edit</a
+      <div
+        class="card-body {{ 'even' if posts.index(post) % 2 == 0 else 'odd' }}"
+      >
+        <h5 class="post-title">
+          <a href="{{ url_for('post', id=post.id )}}"> {{ post.title }} </a>
+        </h5>
+        <p>
+          {{ post.body[:200] | safe }}
+        </p>
+        <a href="{{ url_for('profile', id=post.author.id) }}"
+          ><small> {{ post.author.user_name or "Anonymous" }} </small></a
         >
-        <a class="card-link del mt-5" href="{{ '/delete/%s' % post.id }}"
-          >Delete</a
+        <small class="font-italic">
+          {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small
         >
+        <i class="fa fa-comment purple ml-3" aria-hidden="true"> </i>
+        <span style="font-size: small">{{ post.comments.count() }}</span>
       </div>
     </div>
   </li>

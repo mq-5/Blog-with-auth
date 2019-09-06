@@ -66,8 +66,20 @@ li.post,
   text-align: center;
 }
 
-.post-title {
+.card a {
   color: #a4a8d1;
+}
+
+.card a:hover {
+  text-decoration: none;
+}
+
+.purple {
+  color: #8c91c2;
+}
+
+.card .even {
+  background-color: #9ba0ad13;
 }
 
 #submit {

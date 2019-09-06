@@ -1,8 +1,8 @@
 {% extends "layout.html" %} {% block content %}
 
-<form class="form-signin text-center" method="POST">
+<!-- <form class="form-signin text-center" method="POST">
   <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
-  <label for="inputEmail" class="sr-only">Email address</label>
+  <label for="inputEmail">Email address</label>
   <input
     type="email"
     name="email"
@@ -12,7 +12,7 @@
     required
     autofocus
   />
-  <label for="inputName" class="sr-only">User name</label>
+  <label for="inputName">User name</label>
   <input
     type="text"
     name="name"
@@ -21,7 +21,7 @@
     placeholder="User name"
     required
   />
-  <label for="inputPassword" class="sr-only">Password</label>
+  <label for="inputPassword">Password</label>
   <input
     type="password"
     name="password"
@@ -30,9 +30,36 @@
     placeholder="Password"
     required
   />
+  <label for="inputPassword2">Re-enter Password</label>
+  <input
+    type="password"
+    name="cf-password"
+    id="inputPassword2"
+    class="form-control"
+    placeholder="Re-enter password"
+    required
+  />
   <button class="btn btn-lg btn-primary btn-block" type="submit">
     Sign Up
   </button>
+</form>  -->
+
+<form class="form-signin text-center" method="POST">
+  {{ form.hidden_tag() }}
+  <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
+  {{ form.email.label }}
+  {{ form.email(class_="form-control", placeholder="Enter email") }}
+
+  {{ form.username.label }}
+  {{ form.username(class_="form-control", placeholder="User name") }}
+
+  {{ form.password.label }}
+  {{ form.password(class_="form-control", placeholder="Password") }}
+
+  {{ form.cf_password.label }}
+  {{ form.cf_password(class_="form-control", placeholder="Re-enter password") }}
+
+  {{ form.submit(class_="btn btn-lg btn-primary btn-block") }}
 </form>
 
 {% endblock %}

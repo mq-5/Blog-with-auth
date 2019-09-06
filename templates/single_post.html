@@ -1,0 +1,58 @@
+{% extends "layout.html" %} {% block content %}
+<h2 class="text-center header">{{ post.title }}</h2>
+<div class="card container">
+  <div class="card-body">
+    <a href="{{ url_for('profile', id=post.author.id) }}"
+      ><h3>{{ post.author.user_name or "Anonymous"}}</h3></a
+    >
+    <p>
+      {{ post.body | safe }}
+    </p>
+    <small class="font-italic">
+      {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small
+    >
+
+    <br />
+    {% if current_user.id == post.author_id %}
+    <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}"
+      >Edit</a
+    >
+    <a class="card-link del mt-5" href="{{ url_for('delete', id=post.id) }}"
+      >Delete</a
+    >
+    {% endif %}
+    <h5 class="my-3 purple">Comments</h5>
+    <ul>
+      {% for comment in comments %}
+      <li>
+        <a href="{{ url_for('profile', id=comment.author.id) }}">{{
+          comment.author.user_name
+        }}</a>
+        <small class="font-italic">
+          on {{ "{:%Y-%m-%d %H:%M}".format(comment.created_on) }}
+        </small>
+        {% if current_user.id == post.author_id %}
+        <a href="{{ url_for('edit_comment', id= comment.id) }}">
+          <i
+            class="fa fa-pencil-square mx-2"
+            style="color: grey;"
+            aria-hidden="true"
+          ></i
+        ></a>
+        <a href="{{ url_for('delete_comment', id= comment.id) }}"> Delete</a>
+        {% endif %}
+        <br />
+        {{ comment.body }}
+
+        <hr />
+      </li>
+      {% endfor %}
+      <form class="input-group mb-3" method="POST">
+        {{ comment_form.hidden_tag() }}
+        {{ comment_form.body(class_="form-control", placeholder="Your comment here...") }}
+        {{ comment_form.submit(class_="btn btn-outline-light") }}
+      </form>
+    </ul>
+  </div>
+</div>
+{% endblock %}

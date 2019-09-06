@@ -24,80 +24,15 @@
     />
   </head>
   <body>
-    <nav
-      class="navbar navbar-expand-lg navbar-light"
-      style="background-color: #D5D7EA; width: 100%"
-    >
-      <a class="navbar-brand" href="#">A Blogger's Blog</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item active">
-            <a class="nav-link" href="/"
-              >Home <span class="sr-only">(current)</span></a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts">Posts</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/upload">New Post</a>
-          </li>
-        </ul>
-        <div class="form-inline">
-          {% block button %}
-          <a href="/login" class="btn my-2 my-sm-0 mx-2 btn-outline-dark"
-            >Login</a
-          >
-          <a href="/register" class="btn my-2 my-sm-0 mx-2 btn-light"
-            >Sign Up</a
-          >
-          {% endblock %}
-        </div>
-      </div>
-    </nav>
+    {% include 'includes/_navbar.html' %} {% include 'includes/_flashes.html' %}
     <div id="content" class="container">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <ul class="flashes">
-        {% for category, message in messages %}
-        <li>
-          <div
-            class="alert alert-warning alert-{{
-              category
-            }} alert-dismissible fade show"
-            role="alert"
-          >
-            {{ message }}
-            <button
-              type="button"
-              class="close"
-              data-dismiss="alert"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-      {% endif %} {% endwith %} {% block content %}
-      <h2 class="header">Hello there!</h2>
+      {% block content %}
+      <h2 class="header my-5">Hello there!</h2>
       {% endblock %}
     </div>
-    <div id="footer" class="text-center">
+    <div id="footer" class="text-center mt-5">
       {% block footer %} &copy; Copyright 2019 by
-      <a href="http://domain.invalid/">you</a>. {% endblock %}
+      <a href="http://domain.invalid/">me</a>. {% endblock %}
     </div>
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
