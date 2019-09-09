@@ -14,7 +14,7 @@
   <h5>User ID: {{ user.id }}</h5>
   <h5>User name: {{ user.user_name }}</h5>
   <h5>
-    Posts: <a href=" {{ url_for('user_posts', id=user.id) }}">{{ count }}</a>
+    Posts: <a href=" {{ url_for('user_posts', id=user.id) }}">{{ count }} {{ user.posts.count() }}</a>
   </h5>
   <a href="#" style="visibility: {{'hidden' if user.id!=current_user.id else 'visible'}}">Edit information</a>
 </div>

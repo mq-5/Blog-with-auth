@@ -9,17 +9,19 @@
     <div class="card">
       <div class="card-body {{ 'even' if posts.index(post) % 2 == 0 else 'odd' }}">
         <h5 class="post-title">
-          <a href="{{ url_for('post', id=post.id )}}"> {{ post.title }} </a>
+          <a href="{{ url_for('post', id=post['post'].id )}}"> {{ post['post'].title }} </a>
         </h5>
         <p>
-          {{ post.body[:200] | safe }}
+          {{ post['post'].body[:200] | safe }}
         </p>
-        <a href="{{ url_for('profile', id=post.author.id) }}"><small> {{ post.author.user_name or "Anonymous" }}
+        <a href="{{ url_for('profile', id=post['post'].author.id) }}"><small>
+            {{ post['post'].author.user_name or "Anonymous" }}
           </small></a>
         <small class="font-italic">
-          {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small>
+          {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post['post'].updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post['post'].created_on)}}</small>
         <hr />
         <div>
+<<<<<<< HEAD
           <a href="{{ url_for('like', id=post.id, ref= request.path) }}" class=" like card-link ">
             <i class="fa fa-thumbs-up purple" aria-hidden="true" style="font-size: large"></i>
             {{ post.upvotes.count() }}</a>
@@ -37,6 +39,21 @@
             <i class="fa fa-flag purple ml-3" style="font-size: large"> {{ post.flags.count() }}</i>
             </a>
            
+=======
+
+          <a href="{{ url_for('like', id=post['post'].id, ref= request.path) }}" class=" like card-link ">
+            <i class="fa fa-thumbs{{'' if post['is_upvote'] else '-o'}}-up purple" aria-hidden="true"
+              style="font-size: large"></i>
+            {{ post['post'].upvotes.count() }}</a>
+          <a href="{{ url_for('dislike', id=post['post'].id, ref= request.path) }}" class=" like card-link">
+            <i class="fa fa-thumbs{{'' if post['is_downvote'] else '-o'}}-down purple" style="font-size: large"></i>
+            {{ post['post'].downvotes.count() }}</a>
+          <i class="fa fa-comment-o purple ml-3" aria-hidden="true"> {{ post['post'].comments.count() }} </i>
+          <i class="fa fa-eye ml-3 text-muted" aria-hidden="true"> {{post['post'].views}}</i>
+          <a class="ml-3" href="{{ url_for('flag', id=post['post'].id, ref=request.path) }}">
+            <i class="fa fa-flag{{'' if post['is_flagged'] else '-o'}}" aria-hidden="true">
+              {{ post['post'].flags|length }}</i></a>
+>>>>>>> 0bb088b7f366cf99aa363bbf5a4bfb8cb9d6c5bb
         </div>
       </div>
     </div>

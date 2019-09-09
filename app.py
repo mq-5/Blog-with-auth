@@ -104,6 +104,12 @@ class Follow(db.Model):
                                follower_id], backref='follower')
 
 
+class Flags(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
 db.create_all()
 
 # Forms ===========================================================
@@ -176,7 +182,7 @@ def top_bloggers():
 
 @app.route("/list/<criteria>")
 @login_required
-def list(criteria):
+def lst(criteria):
     if criteria == 'follower':
         follows = Follow.query.with_entities(
             Follow.follower_id).filter_by(followed=current_user).all()
@@ -244,49 +250,69 @@ def sign_up():
 # Posts ================================================================
 @app.route("/posts")
 def posts():
-    posts = Post.query.all()
-    return render_template("posts.html", posts=posts, header="All Posts")
+    posts = sorted(Post.query.all(), key=lambda x: x.updated_on, reverse=True)
+    lst = [{'post': post,
+            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
+           for post in posts]
+
+    return render_template("posts.html", posts=lst, header="All Posts"
+                           )
 
 
 @app.route("/user/<id>/posts")
 def user_posts(id):
     user = User.query.filter_by(id=id).first()
     posts = Post.query.filter(Post.author_id == id).all()
-    return render_template("posts.html", posts=posts, header='{} Posts'.format(user.user_name))
+    lst = [{'post': post,
+            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
+           for post in posts]
+    return render_template("posts.html", posts=lst, header=f"{user.user_name}'s Posts")
 
 
 @app.route("/user/news-feed")
 @login_required
 def news_feed():
-    followings = [follow.followed_id for follow in Follow.query.filter_by(
+    followings = [follow.followed_id for follow in Follow.query.with_entities.filter_by(
         follower_id=current_user.id).all()]
     posts = [post for post in Post.query.all() if post.author_id in followings]
-    return render_template("posts.html", posts=posts, header="News Feed")
+    lst = [{'post': post,
+            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
+           for post in posts]
+    return render_template("posts.html", posts=lst, header="News Feed", Post=Post)
 
 
 @app.route('/posts/<id>', methods=['POST', "GET"])
 def post(id):
     post = Post.query.filter_by(id=id).first()
+    check = {'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+             'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+             'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
     if post:
-        form = NewComment()
         post.views += 1
         db.session.commit()
+        form = NewComment()
         if request.method == "POST":
-            if current_user.is_authenticated:
-                if form.validate_on_submit():
-                    new_comment = Comment(body=form.body.data,
-                                        created_on=datetime.now())
-                    current_user.comments.append(new_comment)
-                    post.comments.append(new_comment)
-                    db.session.add(new_comment)
-                    db.session.commit()
+            if current_user.is_authenticated and form.validate_on_submit():
+                new_comment = Comment(body=form.body.data,
+                                      created_on=datetime.now())
+                current_user.comments.append(new_comment)
+                post.comments.append(new_comment)
+                db.session.add(new_comment)
+                db.session.commit()
             else:
                 flash("You must sign in to comment")
                 for field_name, errors in form.errors.items():
                     flash(errors[0])
             return redirect(url_for('post', id=id))
-        return render_template('single_post.html', post=post, comment_form=form, comments=post.comments.all())
-    return redirect(url_for('home'))
+        return render_template('single_post.html', post=post, comment_form=form,
+                               comments=post.comments.all(), check=check)
+    return redirect(url_for('post', id=id))
 
 
 # Actions ====================================================================
@@ -339,6 +365,24 @@ def dislike(id):
         if existing_upvotes:
             db.session.delete(existing_upvotes)
         db.session.commit()
+    return redirect(ref)
+
+
+@app.route('/posts/<id>/flag')
+@login_required
+def flag(id):
+    ref = request.args.get("ref")
+    post = Post.query.filter_by(id=id).first()
+    flag = Flags.query.filter_by(post_id=id, user_id=current_user.id).first()
+    if post and not flag:
+        new_flag = Flags(post_id=id)
+        current_user.flags.append(new_flag)
+        db.session.add(new_flag)
+        flash('Thank you! Your report has been recorded')
+    elif flag:
+        db.session.delete(flag)
+        flash('You have removed a flag')
+    db.session.commit()
     return redirect(ref)
 
 

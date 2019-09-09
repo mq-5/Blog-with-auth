@@ -32,8 +32,8 @@
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="{{ url_for('profile', id=current_user.id) }}">My profile</a>
-          <a class="dropdown-item" href="{{ url_for('list', criteria='follower') }}">My followers</a>
-          <a class="dropdown-item" href="{{ url_for('list', criteria='following') }}">I follow</a>
+          <a class="dropdown-item" href="{{ url_for('lst', criteria='follower') }}">My followers</a>
+          <a class="dropdown-item" href="{{ url_for('lst', criteria='following') }}">I follow</a>
           <a class="dropdown-item" href="#"> Edit profile </a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{{ url_for('upload') }}" style="font-weight: bold;">New Post</a>
