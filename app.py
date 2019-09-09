@@ -41,7 +41,7 @@ class User(UserMixin, db.Model):
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     upvotes = db.relationship("UpVote", backref="user", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="user", lazy="dynamic")
-    flags = db.relationship('Flag', backref='user',lazy='dynamic')
+    flags = db.relationship('Flag', backref='user',lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -62,7 +62,7 @@ class Post(db.Model):
     comments = db.relationship("Comment", backref="post", lazy="dynamic")
     upvotes = db.relationship("UpVote", backref="post", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="post", lazy="dynamic")
-    flags = db.relationship('Flag', backref='post',lazy='dynamic')
+    flags = db.relationship('Flag', backref='post',lazy=True)
 
 
 class Comment(db.Model):
