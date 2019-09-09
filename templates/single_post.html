@@ -20,6 +20,10 @@
     <a href="{{ url_for('dislike', id=post.id, ref= request.path) }}" class=" like card-link">
       <i class="fa fa-thumbs-down purple" style="font-size: large"></i>
       {{ post.downvotes.count() }}</a>
+      <i class="fa fa-eye purple ml-3" aria-hidden="true" style="font-size: large"> {{ post.views }}</i>
+      <a href="{{ url_for('report', id=post.id, ref= request.path) }}" class=" like card-link">
+        <i class="fa fa-flag purple ml-3" style="font-size: large"> {{ post.flags.count() }}</i>
+        </a>
     {% if current_user.id == post.author_id %}
     <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}">Edit</a>
     <a class="card-link del mt-5" href="{{ url_for('delete', id=post.id) }}">Delete</a>

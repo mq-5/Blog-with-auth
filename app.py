@@ -16,9 +16,9 @@ app.config['SECRET_KEY'] = "secret"
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
 POSTGRES = {
-    'user': 'quyen',
-    'pw': '123',
-    'db': 'blog',
+    'user': 'mors',
+    'pw': '1234',
+    'db': 'quyenblog',
     'host': 'localhost',
     'port': 5432,
 }
@@ -41,6 +41,7 @@ class User(UserMixin, db.Model):
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     upvotes = db.relationship("UpVote", backref="user", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="user", lazy="dynamic")
+    flags = db.relationship('Flag', backref='user',lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -57,9 +58,11 @@ class Post(db.Model):
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     updated_on = db.Column(
         db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
+    views = db.Column(db.Integer, default = 0)
     comments = db.relationship("Comment", backref="post", lazy="dynamic")
     upvotes = db.relationship("UpVote", backref="post", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="post", lazy="dynamic")
+    flags = db.relationship('Flag', backref='post',lazy='dynamic')
 
 
 class Comment(db.Model):
@@ -68,6 +71,13 @@ class Comment(db.Model):
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    
+class Flag (db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    posts_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    
+    
 
 
 class UpVote(db.Model):
@@ -242,7 +252,7 @@ def posts():
 def user_posts(id):
     user = User.query.filter_by(id=id).first()
     posts = Post.query.filter(Post.author_id == id).all()
-    return render_template("posts.html", posts=posts, header=f"{user}'s Posts'")
+    return render_template("posts.html", posts=posts, header='{} Posts'.format(user.user_name))
 
 
 @app.route("/user/news-feed")
@@ -257,22 +267,26 @@ def news_feed():
 @app.route('/posts/<id>', methods=['POST', "GET"])
 def post(id):
     post = Post.query.filter_by(id=id).first()
-    form = NewComment()
-    if request.method == "POST":
-        if current_user.is_authenticated:
-            if form.validate_on_submit():
-                new_comment = Comment(body=form.body.data,
-                                      created_on=datetime.now())
-                current_user.comments.append(new_comment)
-                post.comments.append(new_comment)
-                db.session.add(new_comment)
-                db.session.commit()
-        else:
-            flash("You must sign in to comment")
-            for field_name, errors in form.errors.items():
-                flash(errors[0])
-        return redirect(url_for('post', id=id))
-    return render_template('single_post.html', post=post, comment_form=form, comments=post.comments.all())
+    if post:
+        form = NewComment()
+        post.views += 1
+        db.session.commit()
+        if request.method == "POST":
+            if current_user.is_authenticated:
+                if form.validate_on_submit():
+                    new_comment = Comment(body=form.body.data,
+                                        created_on=datetime.now())
+                    current_user.comments.append(new_comment)
+                    post.comments.append(new_comment)
+                    db.session.add(new_comment)
+                    db.session.commit()
+            else:
+                flash("You must sign in to comment")
+                for field_name, errors in form.errors.items():
+                    flash(errors[0])
+            return redirect(url_for('post', id=id))
+        return render_template('single_post.html', post=post, comment_form=form, comments=post.comments.all())
+    return redirect(url_for('home'))
 
 
 # Actions ====================================================================
@@ -345,6 +359,7 @@ def follow(id):
     return redirect(url_for("profile", id=id))
 
 
+
 @app.route("/edit/<id>", methods=["POST", "GET"])
 @login_required
 def edit(id):
@@ -408,6 +423,20 @@ def delete_comment(id):
         flash("You are not authorized to delete this comment", "danger")
     return redirect(url_for("post", id=comment.post_id))
 
+@app.route("/posts/<id>/flag", methods=['POST', 'GET'])
+def report(id):
+    post = Post.query.filter_by(id=id).first()
+    ref = request.args.get('ref')
+    if post:
+        existing_flags = Flag.query.filter_by(posts_id=id, author_id=current_user.id).first()
+        if not existing_flags:
+            flag = Flag(posts_id=id)
+            current_user.flags.append(flag)
+            db.session.add(flag)
+            db.session.commit()
+        return redirect(ref)
+    return redirect(url_for('post'))
+        
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
