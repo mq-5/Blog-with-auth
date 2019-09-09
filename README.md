@@ -24,7 +24,7 @@
 ## Optional:
 
 - [x] The user can see posts that belong to a specific author only when clicking on that author name.
-- [ ] The user should be able to see a "top bloggers" page (by clicking on a link on navbar), which have statistics on top posters, top commenters, top populars (most up vote)
+- [x] The user should be able to see a "top bloggers" page (by clicking on a link on navbar), which have statistics on top posters, top commenters, top populars (most up vote)
 
 Voting feature
 
@@ -34,9 +34,9 @@ Voting feature
 
 Follow feature
 
-- [ ] The user can follow other users by clicking on the button (e.g "follow username"), clicking again on "unfollow* username" will unfollow him.
+- [x] The user can follow other users by clicking on the button (e.g "follow username"), clicking again on "unfollow* username" will unfollow him.
       (*when user already follow a user, the text will change from follow to unfollow)
-- [ ] The user can see posts that belong to those he is following by accessing the "following" tab (on navbar)
+- [x] The user can see posts that belong to those he is following by accessing the "following" tab (on navbar)
 - [ ] The user can also see who he is following and who's following him by accessing the 2 pages following list, follower list on the navbar, inside the dropdown on the user's username
 
 ## Personal:

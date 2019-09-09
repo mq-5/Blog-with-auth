@@ -82,7 +82,21 @@ class DownVote(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
 
 
+class Follow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey(
+        'user.id'), nullable=False)
+    follower_id = db.Column(db.Integer, db.ForeignKey(
+        'user.id'), nullable=False)
+    followed = db.relationship("User", foreign_keys=[
+                               followed_id], backref='followed')
+    follower = db.relationship("User", foreign_keys=[
+                               follower_id], backref='follower')
+
+
 db.create_all()
+
+# Forms ===========================================================
 
 
 class NewPost(FlaskForm):
@@ -136,9 +150,32 @@ def home():
     return render_template("layout.html")
 
 
-@app.errorhandler
-def errorhandler():
-    return "Error"
+@app.route("/top-bloggers")
+def top_bloggers():
+    # import code
+    # code.interact(local=dict(globals(), **locals()))
+    populars = sorted(User.query.all(),
+                      key=lambda x: x.upvotes.count(), reverse=True)[:3]
+    posters = sorted(User.query.all(),
+                     key=lambda x: x.posts.count(), reverse=True)[:3]
+    commenters = sorted(User.query.all(),
+                        key=lambda x: x.comments.count(), reverse=True)[:3]
+    return render_template('top_bloggers.html', populars=populars,
+                           posters=posters, commenters=commenters)
+
+
+@app.route("/list/<criteria>")
+@login_required
+def list(criteria):
+    if criteria == 'follower':
+        follows = Follow.query.with_entities(
+            Follow.follower_id).filter_by(followed=current_user).all()
+    elif criteria == 'following':
+        follows = Follow.query.with_entities(
+            Follow.followed_id).filter_by(follower=current_user).all()
+    users = [User.query.filter_by(id=follow[0]).first() for follow in follows]
+    print(users)
+    return render_template("list_people.html", users=users, criteria=criteria)
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -164,7 +201,12 @@ def login():
 def profile(id):
     user = User.query.filter_by(id=id).first()
     posts_count = Post.query.filter_by(author_id=id).count()
-    return render_template("profile.html", user=user, count=posts_count)
+    followers = Follow.query.filter_by(followed_id=id).count()
+    followings = Follow.query.filter_by(follower_id=id).count()
+    is_followed = Follow.query.filter_by(
+        followed_id=id, follower_id=current_user.id).first()
+    return render_template("profile.html", user=user, count=posts_count,
+                           followers=followers, followings=followings, is_followed=is_followed)
 
 
 @app.route('/logout')
@@ -192,33 +234,24 @@ def sign_up():
 # Posts ================================================================
 @app.route("/posts")
 def posts():
-    # import code
-    # code.interact(local=dict(globals(), **locals()))
-
     posts = Post.query.all()
-    return render_template("posts.html", posts=posts)
+    return render_template("posts.html", posts=posts, header="All Posts")
 
 
 @app.route("/user/<id>/posts")
 def user_posts(id):
-    posts = Post.query.filter_by(author_id=id).all()
-    return render_template("posts.html", posts=posts)
+    user = User.query.filter_by(id=id).first()
+    posts = Post.query.filter(Post.author_id == id).all()
+    return render_template("posts.html", posts=posts, header=f"{user}'s Posts'")
 
 
-@app.route("/upload", methods=["POST", "GET"])
+@app.route("/user/news-feed")
 @login_required
-def upload():
-    form = NewPost()
-    if request.method == "POST":
-        if form.validate_on_submit():
-            new_post = Post(title=form.title.data,
-                            body=form.body.data)
-            current_user.posts.append(new_post)
-            db.session.add(new_post)
-            db.session.commit()
-            flash("Post successfully uploaded!", 'success')
-            return redirect(url_for("posts"))
-    return render_template("new_post.html", form=form)
+def news_feed():
+    followings = [follow.followed_id for follow in Follow.query.filter_by(
+        follower_id=current_user.id).all()]
+    posts = [post for post in Post.query.all() if post.author_id in followings]
+    return render_template("posts.html", posts=posts, header="News Feed")
 
 
 @app.route('/posts/<id>', methods=['POST', "GET"])
@@ -242,10 +275,27 @@ def post(id):
     return render_template('single_post.html', post=post, comment_form=form, comments=post.comments.all())
 
 
+# Actions ====================================================================
+@app.route("/upload", methods=["POST", "GET"])
+@login_required
+def upload():
+    form = NewPost()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            new_post = Post(title=form.title.data,
+                            body=form.body.data)
+            current_user.posts.append(new_post)
+            db.session.add(new_post)
+            db.session.commit()
+            flash("Post successfully uploaded!", 'success')
+            return redirect(url_for("posts"))
+    return render_template("new_post.html", form=form)
+
+
 @app.route('/posts/<id>/like', methods=['POST', 'GET'])
+@login_required
 def like(id):
     ref = request.args.get('ref')
-    print(ref)
     existing_upvotes = UpVote.query.filter_by(
         post_id=id, author_id=current_user.id).first()
     existing_downvotes = DownVote.query.filter_by(
@@ -257,11 +307,13 @@ def like(id):
         if existing_downvotes:
             db.session.delete(existing_downvotes)
         db.session.commit()
-    return redirect(url_for('posts'))
+    return redirect(ref)
 
 
 @app.route('/posts/<id>/dislike', methods=['POST', 'GET'])
+@login_required
 def dislike(id):
+    ref = request.args.get('ref')
     existing_upvotes = UpVote.query.filter_by(
         post_id=id, author_id=current_user.id).first()
     existing_downvotes = DownVote.query.filter_by(
@@ -273,7 +325,24 @@ def dislike(id):
         if existing_upvotes:
             db.session.delete(existing_upvotes)
         db.session.commit()
-    return redirect(url_for('posts'))
+    return redirect(ref)
+
+
+@app.route('/user/<id>/follow', methods=['POST', 'GET'])
+@login_required
+def follow(id):
+    if current_user.id == int(id):
+        flash("You can't follow yourself")
+    else:
+        existing = Follow.query.filter_by(
+            followed_id=id, follower_id=current_user.id).first()
+        if existing:
+            db.session.delete(existing)
+        else:
+            new_follow = Follow(followed_id=id, follower_id=current_user.id)
+            db.session.add(new_follow)
+        db.session.commit()
+    return redirect(url_for("profile", id=id))
 
 
 @app.route("/edit/<id>", methods=["POST", "GET"])
@@ -327,7 +396,7 @@ def delete(id):
     return redirect(url_for("posts"))
 
 
-@app.route("/delete-comment/<id>")
+@app.route("/delete-comment/<id>", methods=['POST', 'GET'])
 @login_required
 def delete_comment(id):
     comment = Comment.query.filter_by(id=id).first()

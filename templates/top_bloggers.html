@@ -1,0 +1,57 @@
+{% extends "layout.html" %} {% block content %}
+
+<h2 class="header"> Most Popular </h2>
+<ul class="d-flex justify-content-center">
+    {% for blogger in populars %}
+    <li>
+        <div class="card mx-3 my-3 pt-2 text-center" style="width: 18rem;">
+            <div class="card-body">
+                <h4 class="card-title mb-3">#{{ populars.index(blogger)+1 }} {{ blogger.user_name  }}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">Total likes: {{ blogger.upvotes.count() }}</h6>
+                <hr />
+                <a href="{{ url_for('user_posts', id=blogger.id) }}" class="card-link btn-info btn text-white">Posts</a>
+                <a href="{{ url_for('profile', id= blogger.id) }}"
+                    class="card-link btn-secondary text-white btn">Profile</a>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+
+<h2 class="header"> Top Posters </h2>
+<ul class="d-flex justify-content-center">
+    {% for blogger in posters %}
+    <li>
+        <div class="card mx-3 my-3 pt-2 text-center" style="width: 18rem;">
+            <div class="card-body">
+                <h4 class="card-title mb-3">#{{ posters.index(blogger)+1 }} {{ blogger.user_name  }}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">Total posts: {{ blogger.posts.count() }}</h6>
+                <hr />
+                <a href="{{ url_for('user_posts', id=blogger.id) }}" class="card-link btn-info btn text-white">Posts</a>
+                <a href="{{ url_for('profile', id= blogger.id) }}"
+                    class="card-link btn-secondary text-white btn">Profile</a>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+
+<h2 class="header"> Top Commenters </h2>
+<ul class="d-flex justify-content-center">
+    {% for blogger in commenters %}
+    <li>
+        <div class="card mx-3 my-3 pt-2 text-center" style="width: 18rem;">
+            <div class="card-body">
+                <h4 class="card-title mb-3"> #{{ commenters.index(blogger)+1 }} {{ blogger.user_name  }}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">Total comments: {{ blogger.comments.count() }}</h6>
+                <hr />
+                <a href="{{ url_for('user_posts', id=blogger.id) }}" class="card-link btn-info btn text-white">Posts</a>
+                <a href="{{ url_for('profile', id= blogger.id) }}"
+                    class="card-link btn-secondary text-white btn">Profile</a>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

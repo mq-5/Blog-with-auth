@@ -2,24 +2,27 @@
 <h2 class="text-center header">{{ post.title }}</h2>
 <div class="card container">
   <div class="card-body">
-    <a href="{{ url_for('profile', id=post.author.id) }}"
-      ><h3 class="d-inline">
-        {{ post.author.user_name or "Anonymous"}}
-      </h3></a
-    >
+    <a href="{{ url_for('profile', id=post.author.id) }}"></a>
+    <h3 class="d-inline">
+      {{ post.author.user_name or "Anonymous"}}
+    </h3>
+    </a>
     <p class="font-italic mx-2 d-inline">
       {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}
     </p>
     <p class="mt-3 ">
       {{ post.body | safe }}
     </p>
+    <hr />
+    <a href="{{ url_for('like', id=post.id, ref= request.path) }}" class=" like card-link">
+      <i class="fa fa-thumbs-up purple" aria-hidden="true" style="font-size: large"></i>
+      {{ post.upvotes.count() }}</a>
+    <a href="{{ url_for('dislike', id=post.id, ref= request.path) }}" class=" like card-link">
+      <i class="fa fa-thumbs-down purple" style="font-size: large"></i>
+      {{ post.downvotes.count() }}</a>
     {% if current_user.id == post.author_id %}
-    <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}"
-      >Edit</a
-    >
-    <a class="card-link del mt-5" href="{{ url_for('delete', id=post.id) }}"
-      >Delete</a
-    >
+    <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}">Edit</a>
+    <a class="card-link del mt-5" href="{{ url_for('delete', id=post.id) }}">Delete</a>
     {% endif %}
     <h5 class="my-3 purple">Comments</h5>
     <ul>
@@ -33,18 +36,12 @@
         </small>
         {% if current_user.id == comment.author_id %}
         <a href="{{ url_for('edit_comment', id= comment.id) }}">
-          <i
-            class="fa fa-pencil-square mx-2"
-            style="color: grey;"
-            aria-hidden="true"
-          ></i
-        ></a>
+          <i class="fa fa-pencil-square mx-2" style="color: grey;" aria-hidden="true"></i></a>
         <a href="{{ url_for('delete_comment', id= comment.id) }}"> Delete</a>
         {% endif %}
         <br />
-        {{ comment.body }}
+        <p class='mb-2'>{{ comment.body }}</p>
 
-        <hr />
       </li>
       {% endfor %}
       <form class="input-group mb-3" method="POST">

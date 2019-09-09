@@ -1,44 +1,31 @@
 {% extends "layout.html" %} {% block content %}
-<h2 class="text-center header">All posts</h2>
+<h2 class="text-center header">{{ header }}</h2>
 <ul>
+  {% if header == "News Feed" and posts == [] %}
+  <h5 class="text-center text-muted"> Follow others to see more posts... </h5>
+  {% endif %}
   {% for post in posts %}
   <li class="post">
     <div class="card">
-      <div
-        class="card-body {{ 'even' if posts.index(post) % 2 == 0 else 'odd' }}"
-      >
+      <div class="card-body {{ 'even' if posts.index(post) % 2 == 0 else 'odd' }}">
         <h5 class="post-title">
           <a href="{{ url_for('post', id=post.id )}}"> {{ post.title }} </a>
         </h5>
         <p>
           {{ post.body[:200] | safe }}
         </p>
-        <a href="{{ url_for('profile', id=post.author.id) }}"
-          ><small> {{ post.author.user_name or "Anonymous" }} </small></a
-        >
+        <a href="{{ url_for('profile', id=post.author.id) }}"><small> {{ post.author.user_name or "Anonymous" }}
+          </small></a>
         <small class="font-italic">
-          {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small
-        >
+          {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post.updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post.created_on)}}</small>
         <hr />
         <div>
-          <a
-            href="{{ url_for('like', id=post.id, ref='home') }}"
-            class=" like card-link "
-          >
-            <i
-              class="fa fa-thumbs-up purple"
-              aria-hidden="true"
-              style="font-size: large"
-            ></i>
-            {{ post.upvotes.count() }}</a
-          >
-          <a
-            href="{{ url_for('dislike', id=post.id) }}"
-            class=" like card-link"
-          >
+          <a href="{{ url_for('like', id=post.id, ref= request.path) }}" class=" like card-link ">
+            <i class="fa fa-thumbs-up purple" aria-hidden="true" style="font-size: large"></i>
+            {{ post.upvotes.count() }}</a>
+          <a href="{{ url_for('dislike', id=post.id, ref= request.path) }}" class=" like card-link">
             <i class="fa fa-thumbs-down purple" style="font-size: large"></i>
-            {{ post.downvotes.count() }}</a
-          >
+            {{ post.downvotes.count() }}</a>
           <i class="fa fa-comment-o purple ml-3" aria-hidden="true"> </i>
           <span>{{ post.comments.count() }}</span>
         </div>
