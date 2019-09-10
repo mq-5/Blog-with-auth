@@ -42,6 +42,6 @@ Follow feature
 ## Personal:
 
 - [] Error view
-- [] Edit profile info
+- [x] Edit profile info
 - [] Forget password
-- [] Like & dislike
+- [x] Like - click again to unlike

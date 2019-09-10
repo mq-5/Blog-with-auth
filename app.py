@@ -53,6 +53,15 @@ class User(UserMixin, db.Model):
     def set_to_admin(self):
         self.is_admin = True
 
+    def has_upvote(self, post):
+        return UpVote.query.filter_by(post_id=post.id, author_id=self.id).first() is not None
+
+    def has_downvote(self, post):
+        return DownVote.query.filter_by(post_id=post.id, author_id=self.id).first() is not None
+
+    def has_flag(self, post):
+        return Flags.query.filter_by(post_id=post.id, user_id=self.id).first() is not None
+
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -218,8 +227,8 @@ def profile(id):
     followings = Follow.query.filter_by(follower_id=id).count()
     is_followed = Follow.query.filter_by(
         followed_id=id, follower_id=current_user.id).first()
-    return render_template("profile.html", user=user, count=posts_count,
-                           followers=followers, followings=followings, is_followed=is_followed)
+    return render_template("profile.html", user=user, followers=followers,
+                           followings=followings, is_followed=is_followed)
 
 
 @app.route('/logout')
@@ -241,32 +250,42 @@ def sign_up():
             return redirect(url_for("login"))
         else:
             for field_name, errors in form.errors.items():
-                flash(errors[0])
-    return render_template("signup.html", form=form)
+                flash(errors[0], 'warning')
+    default = {'email': 'Enter email', 'name': 'Enter user name'}
+    return render_template("signup.html", form=form, default=default)
+
+
+@app.route('/edit-profile', methods=['POST', 'GET'])
+@login_required
+def edit_profile():
+    form = SignUp()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            current_user.email = form.email.data
+            current_user.user_name = form.username.data
+            current_user.set_password(form.password.data)
+            db.session.add(current_user)
+            db.session.commit()
+            return redirect(url_for("login"))
+        else:
+            for field_name, errors in form.errors.items():
+                flash(errors[0], 'warning')
+    default = {'email': current_user.email, 'name': current_user.user_name}
+    return render_template("signup.html", form=form, default=default)
+
 
 # Posts ================================================================
 @app.route("/posts")
 def posts():
     posts = sorted(Post.query.all(), key=lambda x: x.updated_on, reverse=True)
-    lst = [{'post': post,
-            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
-           for post in posts]
-
-    return render_template("posts.html", posts=lst, header="All Posts")
+    return render_template("posts.html", posts=posts, header="All Posts")
 
 
 @app.route("/user/<id>/posts")
 def user_posts(id):
     user = User.query.filter_by(id=id).first()
     posts = Post.query.filter(Post.author_id == id).all()
-    lst = [{'post': post,
-            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
-           for post in posts]
-    return render_template("posts.html", posts=lst, header=f"{user.user_name}'s Posts")
+    return render_template("posts.html", posts=posts, header=f"{user.user_name}'s Posts")
 
 
 @app.route("/user/news-feed")
@@ -278,20 +297,12 @@ def news_feed():
         follower_id=current_user.id).all()
     posts = [post for post in Post.query.all() if (post.author_id,)
              in followings]
-    lst = [{'post': post,
-            'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-            'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
-           for post in posts]
-    return render_template("posts.html", posts=lst, header="News Feed", Post=Post)
+    return render_template("posts.html", posts=posts, header="News Feed", Post=Post)
 
 
 @app.route('/posts/<id>', methods=['POST', "GET"])
 def post(id):
     post = Post.query.filter_by(id=id).first()
-    check = {'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-             'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-             'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
     if post:
         post.views += 1
         db.session.commit()
@@ -310,7 +321,7 @@ def post(id):
                     flash(errors[0])
             return redirect(url_for('post', id=id))
         return render_template('single_post.html', post=post, comment_form=form,
-                               comments=post.comments.all(), check=check)
+                               comments=post.comments.all())
     return redirect(url_for('post', id=id))
 
 
@@ -320,12 +331,7 @@ def flagged():
     if current_user.is_admin:
         posts = sorted(Post.query.filter(Post.flags).all(),
                        key=lambda x: len(x.flags), reverse=True)
-        lst = [{'post': post,
-                'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-                'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
-                'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
-               for post in posts]
-        return render_template("posts.html", posts=lst, header="Flagged Posts")
+        return render_template("posts.html", posts=posts, header="Flagged Posts")
     else:
         flash("You are not authorized", 'danger')
         return redirect(url_for('posts'))
@@ -342,7 +348,7 @@ def upload():
             current_user.posts.append(new_post)
             db.session.add(new_post)
             db.session.commit()
-            flash("Post successfully uploaded!", 'success')
+            flash("Post successfully uploaded!")
             return redirect(url_for("posts"))
     return render_template("new_post.html", form=form)
 
@@ -351,17 +357,21 @@ def upload():
 @login_required
 def like(id):
     ref = request.args.get('ref')
-    existing_upvotes = UpVote.query.filter_by(
-        post_id=id, author_id=current_user.id).first()
-    existing_downvotes = DownVote.query.filter_by(
-        post_id=id, author_id=current_user.id).first()
-    if not existing_upvotes:
-        upvote = UpVote(post_id=id)
-        current_user.upvotes.append(upvote)
-        db.session.add(upvote)
-        if existing_downvotes:
-            db.session.delete(existing_downvotes)
+    try:
+        post = Post.query.filter_by(id=id).one()
+        if not current_user.has_upvote(post):
+            upvote = UpVote(post_id=id)
+            current_user.upvotes.append(upvote)
+            db.session.add(upvote)
+            if current_user.has_downvote(post):
+                db.session.delete(DownVote.query.filter_by(
+                    post_id=post.id, author_id=current_user.id).first())
+        else:
+            db.session.delete(UpVote.query.filter_by(
+                post_id=id, author_id=current_user.id).first())
         db.session.commit()
+    except:
+        flash("Post not found", 'danger')
     return redirect(ref)
 
 
@@ -369,17 +379,21 @@ def like(id):
 @login_required
 def dislike(id):
     ref = request.args.get('ref')
-    existing_upvotes = UpVote.query.filter_by(
-        post_id=id, author_id=current_user.id).first()
-    existing_downvotes = DownVote.query.filter_by(
-        post_id=id, author_id=current_user.id).first()
-    if not existing_downvotes:
-        downvote = DownVote(post_id=id)
-        current_user.downvotes.append(downvote)
-        db.session.add(downvote)
-        if existing_upvotes:
-            db.session.delete(existing_upvotes)
+    try:
+        post = Post.query.filter_by(id=id).one()
+        if not current_user.has_downvote(post):
+            downvote = DownVote(post_id=id)
+            current_user.downvotes.append(downvote)
+            db.session.add(downvote)
+            if current_user.has_upvote(post):
+                db.session.delete(UpVote.query.filter_by(
+                    post_id=id, author_id=current_user.id).first())
+        else:
+            db.session.delete(DownVote.query.filter_by(
+                post_id=post.id, author_id=current_user.id).first())
         db.session.commit()
+    except:
+        flash('Post not found', 'danger')
     return redirect(ref)
 
 
@@ -388,13 +402,12 @@ def dislike(id):
 def flag(id):
     ref = request.args.get("ref")
     post = Post.query.filter_by(id=id).first()
-    flag = Flags.query.filter_by(post_id=id, user_id=current_user.id).first()
-    if post and not flag:
+    if post and not current_user.has_flag(post):
         new_flag = Flags(post_id=id)
         current_user.flags.append(new_flag)
         db.session.add(new_flag)
-        flash('Thank you! Your report has been recorded')
-    elif flag:
+        flash('Thank you! Your report has been recorded', 'info')
+    elif current_user.has_flag(post):
         db.session.delete(flag)
         flash('You have removed a flag')
     db.session.commit()
@@ -405,7 +418,7 @@ def flag(id):
 @login_required
 def follow(id):
     if current_user.id == int(id):
-        flash("You can't follow yourself")
+        flash("You can't follow yourself", 'warning')
     else:
         existing = Follow.query.filter_by(
             followed_id=id, follower_id=current_user.id).first()
@@ -449,7 +462,7 @@ def edit_comment(id):
             db.session.commit()
             return redirect(url_for("post", id=comment.post_id))
         for field_name, errors in form.errors.items():
-            flash(errors[0])
+            flash(errors[0], 'warning')
         return render_template("edit_comment.html", comment=comment, form=form)
     else:
         flash("You are not authorized to edit this comment", "danger")
@@ -476,7 +489,7 @@ def delete_comment(id):
     if current_user.id == comment.author_id or current_user.is_admin:
         db.session.delete(comment)
         db.session.commit()
-        flash("Comment deleted!")
+        flash("Comment deleted!", 'warning')
     else:
         flash("You are not authorized to delete this comment", "danger")
     return redirect(url_for("post", id=comment.post_id))
