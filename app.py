@@ -37,6 +37,7 @@ class User(UserMixin, db.Model):
     user_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String(128), index=True, unique=True)
     password_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     upvotes = db.relationship("UpVote", backref="user", lazy="dynamic")
@@ -48,6 +49,9 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def set_to_admin(self):
+        self.is_admin = True
 
 
 class Post(db.Model):
@@ -250,8 +254,7 @@ def posts():
             'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
            for post in posts]
 
-    return render_template("posts.html", posts=lst, header="All Posts"
-                           )
+    return render_template("posts.html", posts=lst, header="All Posts")
 
 
 @app.route("/user/<id>/posts")
@@ -269,9 +272,12 @@ def user_posts(id):
 @app.route("/user/news-feed")
 @login_required
 def news_feed():
-    followings = [follow.followed_id for follow in Follow.query.with_entities.filter_by(
-        follower_id=current_user.id).all()]
-    posts = [post for post in Post.query.all() if post.author_id in followings]
+    # followings = [follow.followed_id for follow in Follow.query.filter_by(
+    #     follower_id=current_user.id).all()]
+    followings = Follow.query.with_entities(Follow.followed_id).filter_by(
+        follower_id=current_user.id).all()
+    posts = [post for post in Post.query.all() if (post.author_id,)
+             in followings]
     lst = [{'post': post,
             'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
             'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
@@ -307,6 +313,22 @@ def post(id):
                                comments=post.comments.all(), check=check)
     return redirect(url_for('post', id=id))
 
+
+@app.route('/posts/flagged')
+@login_required
+def flagged():
+    if current_user.is_admin:
+        posts = sorted(Post.query.filter(Post.flags).all(),
+                       key=lambda x: len(x.flags), reverse=True)
+        lst = [{'post': post,
+                'is_upvote': UpVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+                'is_downvote': DownVote.query.filter_by(post_id=post.id, author_id=current_user.id).first(),
+                'is_flagged': Flags.query.filter_by(post_id=post.id, user_id=current_user.id).first()}
+               for post in posts]
+        return render_template("posts.html", posts=lst, header="Flagged Posts")
+    else:
+        flash("You are not authorized", 'danger')
+        return redirect(url_for('posts'))
 
 # Actions ====================================================================
 @app.route("/upload", methods=["POST", "GET"])
@@ -438,7 +460,7 @@ def edit_comment(id):
 @login_required
 def delete(id):
     post = Post.query.filter_by(id=id, author_id=current_user.id).first()
-    if post:
+    if post or current_user.is_admin:
         db.session.delete(post)
         db.session.commit()
         flash("Post successfully deleted!", 'success')
@@ -451,7 +473,7 @@ def delete(id):
 @login_required
 def delete_comment(id):
     comment = Comment.query.filter_by(id=id).first()
-    if current_user.id == comment.author_id:
+    if current_user.id == comment.author_id or current_user.is_admin:
         db.session.delete(comment)
         db.session.commit()
         flash("Comment deleted!")

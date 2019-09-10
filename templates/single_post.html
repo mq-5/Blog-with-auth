@@ -25,7 +25,7 @@
     <a class="ml-3" href="{{ url_for('flag', id=post.id, ref=request.path) }}">
       <i class="fa fa-flag{{'' if check['is_flagged'] else '-o'}}" aria-hidden="true">
         {{ post.flags|length }}</i></a>
-    {% if current_user.id == post.author_id %}
+    {% if current_user.id == post.author_id or current_user.is_admin %}
     <a class="card-link edit mt-5" href="{{ url_for('edit', id=post.id) }}">Edit</a>
     <a class="card-link del mt-5" href="{{ url_for('delete', id=post.id) }}">Delete</a>
     {% endif %}
@@ -39,7 +39,7 @@
         <small class="font-italic">
           on {{ "{:%Y-%m-%d %H:%M}".format(comment.created_on) }}
         </small>
-        {% if current_user.id == comment.author_id %}
+        {% if current_user.id == comment.author_id or current_user.is_admin %}
         <a href="{{ url_for('edit_comment', id= comment.id) }}">
           <i class="fa fa-pencil-square mx-2" style="color: grey;" aria-hidden="true"></i></a>
         <a href="{{ url_for('delete_comment', id= comment.id) }}"> Delete</a>
