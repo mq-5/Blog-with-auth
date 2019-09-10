@@ -1,5 +1,5 @@
 {% extends "layout.html" %} {% block content %}
-<h2 class="text-center header">{{ header }}</h2>
+<h2 class="text-center header">hi {{ header}}</h2>
 <ul>
   {% if header == "News Feed" and posts == [] %}
   <h5 class="text-center text-muted"> Follow others to see more posts... </h5>
@@ -21,6 +21,25 @@
           {{'updated '+ "{:%Y-%m-%d %H:%M}".format(post['post'].updated_on) or 'created ' +"{:%Y-%m-%d %H:%M}".format(post['post'].created_on)}}</small>
         <hr />
         <div>
+<<<<<<< HEAD
+          <a href="{{ url_for('like', id=post.id, ref= request.path) }}" class=" like card-link ">
+            <i class="fa fa-thumbs-up purple" aria-hidden="true" style="font-size: large"></i>
+            {{ post.upvotes.count() }}</a>
+
+          <a href="{{ url_for('dislike', id=post.id, ref= request.path) }}" class=" like card-link">
+            <i class="fa fa-thumbs-down purple" style="font-size: large"> {{ post.downvotes.count() }}</i>
+            </a>
+
+          <i onclick = "window.location.href=`{{url_for('post', id = post.id)}}`" class="fa fa-comment-o purple ml-3" aria-hidden="true">{{ post.comments.count() }}</i>
+
+          
+          <i class="fa fa-eye purple ml-3" aria-hidden="true" style="font-size: large"> {{ post.views }}</i>
+
+          <a href="{{ url_for('report', id=post.id, ref= request.path) }}" class=" like card-link">
+            <i class="fa fa-flag purple ml-3" style="font-size: large"> {{ post.flags.count() }}</i>
+            </a>
+           
+=======
 
           <a href="{{ url_for('like', id=post['post'].id, ref= request.path) }}" class=" like card-link ">
             <i class="fa fa-thumbs{{'' if post['is_upvote'] else '-o'}}-up purple" aria-hidden="true"
@@ -34,6 +53,7 @@
           <a class="ml-3" href="{{ url_for('flag', id=post['post'].id, ref=request.path) }}">
             <i class="fa fa-flag{{'' if post['is_flagged'] else '-o'}}" aria-hidden="true">
               {{ post['post'].flags|length }}</i></a>
+>>>>>>> 0bb088b7f366cf99aa363bbf5a4bfb8cb9d6c5bb
         </div>
       </div>
     </div>

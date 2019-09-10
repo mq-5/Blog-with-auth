@@ -16,9 +16,9 @@ app.config['SECRET_KEY'] = "secret"
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
 POSTGRES = {
-    'user': 'quyen',
-    'pw': '123',
-    'db': 'blog',
+    'user': 'mors',
+    'pw': '1234',
+    'db': 'quyenblog',
     'host': 'localhost',
     'port': 5432,
 }
@@ -42,7 +42,7 @@ class User(UserMixin, db.Model):
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     upvotes = db.relationship("UpVote", backref="user", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="user", lazy="dynamic")
-    flags = db.relationship("Flags", backref='user', lazy=True)
+    flags = db.relationship('Flag', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -66,7 +66,7 @@ class Post(db.Model):
     comments = db.relationship("Comment", backref="post", lazy="dynamic")
     upvotes = db.relationship("UpVote", backref="post", lazy="dynamic")
     downvotes = db.relationship("DownVote", backref="post", lazy="dynamic")
-    flags = db.relationship("Flags", backref='post', lazy=True)
+    flags = db.relationship('Flag', backref='post', lazy=True)
 
 
 class Comment(db.Model):
@@ -75,6 +75,12 @@ class Comment(db.Model):
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+
+class Flag (db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
 
 class UpVote(db.Model):
@@ -483,4 +489,4 @@ def delete_comment(id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
