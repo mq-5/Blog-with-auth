@@ -48,10 +48,10 @@
   {{ form.hidden_tag() }}
   <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
   {{ form.email.label }}
-  {{ form.email(class_="form-control", placeholder="Enter email") }}
+  {{ form.email(class_="form-control", placeholder=default['email']) }}
 
   {{ form.username.label }}
-  {{ form.username(class_="form-control", placeholder="User name") }}
+  {{ form.username(class_="form-control", placeholder=default['name']) }}
 
   {{ form.password.label }}
   {{ form.password(class_="form-control", placeholder="Password") }}
